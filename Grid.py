@@ -101,7 +101,7 @@ class Grid:
         return return_position
 
 
-    def get_grid(self):
+    def get_grid_info(self):
         """
         Gets Grids's attributes.
 
@@ -148,7 +148,7 @@ class Position:
         self.X = X
         self.Y = Y
 
-    def get_position(self):
+    def get_position_info(self):
         """
         Gets Position's attributes.
 

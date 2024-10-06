@@ -55,12 +55,27 @@ class Client:
 
     def get_products(self):
         """
-        Returns Client's Products.
+        Get Client's Products.
 
         Returns:
             list[Product]: List of all Client's Products' attributes.
         """
         return self.products
+    
+    def get_products_accumulated_weight(self):
+        """
+        Calculate Client's Products' accumulated weight.
+
+        Returns:
+            list[float]: Client's Products' accumulated weight.
+        """
+
+        total_weight = []
+        total_weight.append(0.0)
+        for product in self.products:
+            total_weight.append(total_weight[-1] + product.weight)
+
+        return total_weight
     
     def get_client_info(self):
         """

@@ -9,17 +9,17 @@ class Drone:
     Drone class.
 
     Attributes:
-        id                                  (int): Drone's IDentification number.
-        altitude                          (float): Drone's current altitude.
-        maximum_altitude                  (float): Drone's maximum altitude.
-        batery                            (float): Drone's current batery.
-        current_position               (Position): Drone's current grid Position (XY).
-        current_weight                    (float): Drone's current weight.
-        maximum_weight                    (float): Drone's maximum weight.
-        orders           (dict{Client: Products}): Drone's dictionary of Clients orders.
-        path                     (list[Position]): Drone's path at given moment.
-        velocity                          (float): Drone's current velocity.
-        maximum_velocity                  (float): Drone's maximum velocity.
+        id                                       (int): Drone's IDentification number.
+        altitude                               (float): Drone's current altitude.
+        maximum_altitude                       (float): Drone's maximum altitude.
+        batery                                 (float): Drone's current batery.
+        current_position                    (Position): Drone's current grid Position (XY).
+        current_weight                         (float): Drone's current weight.
+        maximum_weight                         (float): Drone's maximum weight.
+        orders           (dict{Client: list[Product]}): Drone's dictionary of Clients orders.
+        path                          (list[Position]): Drone's path at given moment.
+        velocity                               (float): Drone's current velocity.
+        maximum_velocity                       (float): Drone's maximum velocity.
     """
     # Class shared variable
     _id_counter = 1
@@ -66,7 +66,7 @@ class Drone:
         self.velocity = 0.0
         self.maximum_velocity = maximum_velocity
 
-    def get_order(self, client):
+    def add_new_order(self, client):
         """
         Adds a new order to Drone. An order is all Client's products at given moment. It is represented as a dictionary, 
         with Client as the Key and the products, its values. Whenever an order is taken, we should check if Client has made 
@@ -84,9 +84,9 @@ class Drone:
 
         # Sanity Check #
         if (not isinstance(client, Client)):
-            raise TypeError("ERROR in get_order in Drone. Your client must be an instance of Client.")
+            raise TypeError("ERROR in add_new_order in Drone. Your client must be an instance of Client.")
         if ( len(client.products) == 0 ):
-            raise ValueError("ERROR in get_order in Drone. Your client must have atleast one Product to make an order.")
+            raise ValueError("ERROR in add_new_order in Drone. Your client must have atleast one Product to make an order.")
 
         new_products = client.products
         if (client in self.order):
@@ -98,7 +98,34 @@ class Drone:
             self.current_weight += new_product.weight
             self.order[client].append(new_product)
 
+    def get_order(self, client):
+        """
+        Returns an Order of specified Client, if any found.
+
+        Args:
+            client (Client): Client to be found
+
+        Returns:
+            dict (dict{Client: list[Product]}): If order found, order with Key being Client instance and values, it's products. None, otherwise.
+
+        Raises: 
+            ValueError: If "client" is None (Invalid Client).
+            TypeError: If "client" is not an instance of Client.
+        """
+
+        # Sanity Check. #
+        if (client is None):
+            raise ValueError("ERROR in get_order in Drone. Your client must be a real Client.")
+        if (not isinstance(client, Client)):
+            raise TypeError("ERROR in get_order in Drone. Your client must be an instance of Client.")
+        
+        order_dict = None
+        if (client in self.order):
+            current_order_client_items = self.order.get(client)
+            order_dict = defaultdict(list)
+            order_dict[client] = current_order_client_items
     
+        return order_dict
 
     
     def get_drone_info(self):

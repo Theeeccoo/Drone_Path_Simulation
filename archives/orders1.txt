@@ -1,0 +1,6 @@
+Robson,Laranja 10.0 1.56,Uva 20.57 1.5,Banana 5.25 7.42
+Rebeca,Mouse 69.54 0.3,Teclado 546.2 1.54
+Mirela,Caderno 15.5 1.5,Lapis 3.9 0.2
+Joao,Leite 3.5 1.5,Sucrilhos 50.0 0.8,Nescal 8.0 0.5
+Robson,Melancia 60.0 10.0,Abacaxi 6.0 1.5
+Joao,Feijao 10.0 1.0,Arroz 23.0 5.0

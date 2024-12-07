@@ -86,6 +86,20 @@ class Client:
         """
         return self.__dict__
 
+    def __str__(self):
+        """
+        Returns stringfied representation of a Client instance.
+
+        Returns:
+            str: Stringfied representation of a Client instance.
+        """
+
+        return_string = f"{self.name}, at ({self.position}):\n"
+        return_string += "   Product:    Name                 Price               Weight\n"
+        for product in self.products:
+            return_string += f"\t{str(product)}\n"
+        return return_string
+
 
 
 

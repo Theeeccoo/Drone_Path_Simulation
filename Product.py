@@ -53,3 +53,13 @@ class Product:
         """
         return self.__dict__
 
+    def __str__(self):
+        """
+        Returns stringfied representation of a Product instance.
+
+        Returns:
+            str: Stringfied representation of a Product instance.
+        """
+
+        return f"{self.name:^20} {self.price:^20} {self.weight:^20}"
+

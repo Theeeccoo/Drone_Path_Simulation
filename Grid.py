@@ -37,11 +37,15 @@ class Grid:
         self.width = width
         self.positions = []
 
+        # Read file with altitude values ​​at each grid position
+        with open('./archives/altitude1.txt', 'r') as arquivo:
+            lines = arquivo.readlines()
+
         for x in range(0, self.height):
             for y in range(0, self.width):
-                self.positions.append(Position(x, y))
+                z = int (lines[(x * self.width) + y].strip())
+                self.positions.append(Position(x, y, z))
 
-        
     def check_position_in_grid(self, position):
         """
         Checks if a specified "position" is in between Grid's limits.
@@ -95,7 +99,7 @@ class Grid:
         
 
         return_position = None
-        if ( self.check_position_in_grid(Position(X,Y)) ):
+        if ( self.check_position_in_grid(Position(X,Y, 0)) ):
             return_position = self.positions[(X * self.width) + Y]
 
         return return_position
@@ -110,7 +114,23 @@ class Grid:
         """
         return self.__dict__
 
+    def __str__(self):
+        """
+        Returns stringfied representation of a Grid instance.
 
+        Returns:
+            str: Stringfied representation of a Grid instance.
+        """
+
+        return_string = ""
+
+        for i in range(0, self.height):
+            return_string += "|"
+            for j in range(0, self.width):
+                return_string += f"{str(self.positions[(i * self.width) +  j])}|"
+
+            return_string += "\n"
+        return return_string
 
 class Position:
     """
@@ -119,19 +139,21 @@ class Position:
     Attributes:
         X (int): Position's X value.
         Y (int): Position's Y value.
+        Z (int): Altitude of point (X, Y).
     """
 
-    def __init__(self, X, Y):
+    def __init__(self, X, Y, Z):
         """
         Initiates a new Position instance with specified values. Null or invalid values are considered as an error (raises ValueError TypeError).
 
         Args: 
             X (int): X value, related to GRID.
             Y (int): Y value, related to GRID.
+            Z (int): Z value, related to GRID.
 
         Raises:
-            ValueError: If attributes "X", "Y" are None.
-            TypeError: If attributes "X", "Y" have incorrect types.
+            ValueError: If attributes "X", "Y", "Z"  are None.
+            TypeError: If attributes "X", "Y", "Z" have incorrect types.
         """
 
         # Sanity Check #
@@ -144,9 +166,15 @@ class Position:
             raise ValueError("ERROR in __init__ in Position. Your Position must have a valid Y value.")
         if (not isinstance(Y, int)):
             raise TypeError("ERROR in __init__ in Position. Your Position's Y must be an instance of int.")
+
+        if (Z is None):
+            raise ValueError("ERROR in __init__ in Position. Your Position must have a valid Z value.")
+        if (not isinstance(Z, int)):
+            raise TypeError("ERROR in __init__ in Position. Your Position's Z must be an instance of int.")
         
         self.X = X
         self.Y = Y
+        self.Z = Z
 
     def get_position_info(self):
         """
@@ -157,4 +185,14 @@ class Position:
         """
 
         return self.__dict__
+
+    def __str__(self):
+        """
+        Returns stringfied representation of a Poisition instance.
+
+        Returns:
+            str: Stringfied representation of a Poisition instance.
+        """
+
+        return f"{self.X},{self.Y},{self.Z}"
     

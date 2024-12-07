@@ -1,0 +1,4 @@
+Robson,0 0
+Rebeca,2 3
+Mirela,3 0
+Joao,4 2

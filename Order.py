@@ -1,43 +1,45 @@
+from Client import Client
+
 class Order:
     """
     Order Class.
 
     Attributes:
-        client_name         (str): Client name.
-        products            (list[Products]): Product's client order.
-        accumulate_weight   (float): Cumulative order weight.
+        client          (Client): Order's client.
+        products        (list[Products]): Order's products.
+        total_weight    (float): Order's total weight.
     """
 
-    def __init__(self, client_name, products):
+    def __init__(self, client, products):
         """
         Initiates a new Order instance with specified values. Null or invalid values are considered as an error (raises ValueError).
 
         Args:
-            client_name     (str): Client name.
-            products        (list[Products]): Product's client order.
+            client      (Client): Order's client.
+            products    (list[Products]): Order's products.
 
         Raises:
-            ValueError: If attributes "client_name", "products" are either None or invalid (Empty string, negative values or incorrect Type).
-            TypeError: If attributes "client_name", "products" have incorrect types.
+            ValueError: If attributes "client", "products" are either None or invalid (empty list or incorrect Type).
+            TypeError: If attributes "client", "products" have incorrect types.
 
         """
 
         # Sanity Check #
-        if (client_name is None) or (client_name == ""):
-            raise ValueError("ERROR in __init__ in Order. Your Order must have a valid client name.")
-        if (not isinstance(client_name, str)):
-            raise TypeError("ERROR in __init__ in Order. Your Client name must be an instance of str.")
-
+        if (client is None):
+            raise ValueError("ERROR in __init__ in Order. Your Order must be valid.")
+        if (not isinstance(client, Client)):
+            raise TypeError("ERROR in __init__ in Order. Your Client must be an instance of Client.")
+            
         if ( len(products) == 0 ):
             raise ValueError("ERROR in __init__ in Order. Your order must have atleast one Product to make an order.")
 
 
-        self.client_name = client_name
+        self.client = client
         self.products = products
 
-        self.accumulate_weight = 0.0
+        self.total_weight = 0.0
         for product in products:
-            self.accumulate_weight += product.weight
+            self.total_weight += product.weight
 
     def get_order_info(self):
         """
@@ -56,7 +58,8 @@ class Order:
             str: Stringfied representation of a Order instance.
         """
 
-        return_string = f"{self.client_name}:\n"
+        return_string = f"{self.client.name}:\n"
+        return_string += f"Total order's weight: {self.total_weight}\n"
         return_string += "   Product:    Name                 Price               Weight\n"
         for product in self.products:
             return_string += f"\t{str(product)}\n"

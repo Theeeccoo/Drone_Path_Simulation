@@ -103,7 +103,64 @@ class Grid:
             return_position = self.positions[(X * self.width) + Y]
 
         return return_position
+    
+    def get_neighbors(self, position):
+        """
+        Returns "position"'s neighbors (neighborhood of 8) positions as a list.
 
+        Args:
+            position (Position): Desired "position" to get neighbors
+
+        Returns:
+            neighbors (list[Position]): Grid's "position"'s neighbors
+        """
+
+        # Sanity Check #
+        if not isinstance(position, Position):
+            raise TypeError("ERROR in check_position_in_grid in Grid. Only Position instances can be checked.")
+
+        neighbors = []
+        position_x = position.X
+        position_y = position.Y
+
+        ## X-1 Y-1
+        position_neighbor = self.get_position_in_grid((position_x - 1), position_y - 1)
+        if position_neighbor != None: neighbors.append(position_neighbor)
+
+        ## X-1 Y
+        position_neighbor = self.get_position_in_grid((position_x - 1), position_y)
+        if position_neighbor != None: neighbors.append(position_neighbor)
+
+        ## X-1 Y+1
+        position_neighbor = self.get_position_in_grid((position_x - 1), position_y + 1)
+        if position_neighbor != None: neighbors.append(position_neighbor)
+
+        ## X   Y-1
+        position_neighbor = self.get_position_in_grid((position_x), position_y - 1)
+        if position_neighbor != None: neighbors.append(position_neighbor)
+
+        ## X   Y+1
+        position_neighbor = self.get_position_in_grid((position_x), position_y + 1)
+        if position_neighbor != None: neighbors.append(position_neighbor)
+
+        ## X+1 Y-1
+        position_neighbor = self.get_position_in_grid((position_x + 1), position_y - 1)
+        if position_neighbor != None: neighbors.append(position_neighbor)
+
+        ## X+1 Y
+        position_neighbor = self.get_position_in_grid((position_x + 1), position_y)
+        if position_neighbor != None: neighbors.append(position_neighbor)
+
+        ## X+1 Y+1
+        position_neighbor = self.get_position_in_grid((position_x + 1), position_y + 1)
+        if position_neighbor != None: neighbors.append(position_neighbor)
+
+        return neighbors
+
+    def grid_update_position_classification(self):
+        for position in self.positions:
+            if position.classification == "drone":
+                position.set_position_classification(position.last_classification)
 
     def get_grid_info(self):
         """
@@ -122,14 +179,31 @@ class Grid:
             str: Stringfied representation of a Grid instance.
         """
 
-        return_string = ""
+        # return_string = ""
 
-        for i in range(0, self.height):
-            return_string += "|"
-            for j in range(0, self.width):
-                return_string += f"{str(self.positions[(i * self.width) +  j])}|"
+        # for i in range(0, self.height):
+        #     return_string += "|"
+        #     for j in range(0, self.width):
+        #         return_string += f"{str(self.positions[(i * self.width) +  j])}|"
 
+        #     return_string += "\n"
+        # return return_string
+
+        return_string = "   "  # Espaço inicial para alinhar com os índices das linhas
+
+        # Adicionar cabeçalho com os índices das colunas
+        for j in range(self.width):
+            return_string += f"{j:>2} "  # Formata os índices das colunas com largura fixa
+        return_string += "\n"
+
+        # Construir as linhas da grid
+        for i in range(self.height):
+            return_string += f"{i:>2}|"  # Adiciona o índice da linha no início
+            for j in range(self.width):
+                value = str(self.positions[(i * self.width) + j])  # Obtém o valor na posição
+                return_string += f"{value:>2}|"  # Adiciona o valor com largura fixa
             return_string += "\n"
+
         return return_string
 
 class Position:
@@ -137,9 +211,11 @@ class Position:
     Position class.
 
     Attributes:
-        X (int): Position's X value.
-        Y (int): Position's Y value.
-        Z (int): Altitude of point (X, Y).
+        X                       (int): Position's X value.
+        Y                       (int): Position's Y value.
+        Z                       (int): Altitude of point (X, Y).
+        current_classification  (str): Position's classification. Can be "client", "base", "drone" or "none"
+        last_classification     (str): Position's last classification. Can be "client", "base", "drone" or "none"
     """
 
     def __init__(self, X, Y, Z):
@@ -175,6 +251,27 @@ class Position:
         self.X = X
         self.Y = Y
         self.Z = Z
+        self.classification = "none"
+        self.last_classification = "none"
+
+    def set_position_classification(self, classification):
+        """
+        Sets position's classifcation with "classification". It can be "client", "base", "drone" or "none".
+
+        Args:
+            classification (str): Classification
+        
+        Raises: 
+            ValueError: If arg "classification" is empty string or None.
+            TypeError: if arg "classification" type is different than "str".
+        """
+        if (classification != "client" and classification != "base" and classification != "drone" and classification != "none") or (classification is None):
+            raise ValueError("ERROR in __init__ in Position. Your Position must have a valid classification ('client', 'base' or 'none').")
+        if (not isinstance(classification, str)):
+            raise TypeError("ERROR in __init__ in Position. Your Position's classification must be an instance of str.")
+        
+        self.last_classification = self.classification
+        self.classification = classification
 
     def get_position_info(self):
         """
@@ -188,11 +285,17 @@ class Position:
 
     def __str__(self):
         """
-        Returns stringfied representation of a Poisition instance.
+        Returns stringfied representation of a Position instance.
 
         Returns:
-            str: Stringfied representation of a Poisition instance.
+            str: Stringfied representation of a Position instance.
         """
 
-        return f"{self.X},{self.Y},{self.Z}"
+        return_string = ""
+        if (self.classification == "base"): return_string = "B"
+        elif (self.classification == "client"): return_string = "C"
+        elif (self.classification == "drone"): return_string = "D"
+        elif   (self.classification == "none" ): return_string = "-"
+
+        return return_string
     

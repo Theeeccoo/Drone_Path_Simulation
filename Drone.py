@@ -1,6 +1,7 @@
 from Product import Product
 from Grid import Position
 from Client import Client
+from Order import Order
 
 from collections import defaultdict
 
@@ -12,8 +13,9 @@ class Drone:
         id                                       (int): Drone's IDentification number.
         altitude                               (float): Drone's current altitude.
         maximum_altitude                       (float): Drone's maximum altitude.
-        batery                                 (float): Drone's current batery.
-        current_position                    (Position): Drone's current grid Position (XY).
+        battery                                (float): Drone's current battery.
+        maximum_battery                        (float): Drone's maximum battery.
+        current_position                    (Position): Drone's current grid Position (XYZ).
         current_weight                         (float): Drone's current weight.
         maximum_weight                         (float): Drone's maximum weight.
         orders           (dict{Client: list[Product]}): Drone's dictionary of Clients orders.
@@ -57,46 +59,53 @@ class Drone:
 
         self.altitude = 0.0
         self.maximum_altitude = maximum_altitude
-        self.batery = 100.0
+        self.battery = 5.0
+        self.maximum_battery = 5.0
         self.current_position = None
         self.current_weight = 0.0
         self.maximum_weight = maximum_weight
-        self.order = defaultdict(list)
+        self.orders = defaultdict(list)
         self.path = []
         self.velocity = 0.0
         self.maximum_velocity = maximum_velocity
 
-    def add_new_order(self, client):
+    def add_new_order(self, order):
         """
-        Adds a new order to Drone. An order is all Client's products at given moment. It is represented as a dictionary, 
-        with Client as the Key and the products, its values. Whenever an order is taken, we should check if Client has made 
-        an order before, if yes, we just add the new products.
+        Adds a new order to Drone.
 
         *IMPORTANT:* Must check if drone has available weight before getting the order
 
         Args:
-            client (Client): Client that made the order.
+            order (Order): Order that made the order.
 
         Raises:
-            ValueError: If "client" has no products. 
-            TypeError: If "client" is not an instance of Client.
+            ValueError: If "order" has no products. 
+            TypeError: If "order" is not an instance of Order.
         """
 
         # Sanity Check #
-        if (not isinstance(client, Client)):
-            raise TypeError("ERROR in add_new_order in Drone. Your client must be an instance of Client.")
-        if ( len(client.products) == 0 ):
-            raise ValueError("ERROR in add_new_order in Drone. Your client must have atleast one Product to make an order.")
+        if (not isinstance(order, Order)):
+            raise TypeError("ERROR in add_new_order in Drone. Your order must be an instance of Order.")
+        
 
-        new_products = client.products
-        if (client in self.order):
-            current_order_client_items = self.order.get(client)
-            new_products = list( set(client.products) - set(current_order_client_items) )
-            
+        self.current_weight += order.total_weight
+        for new_product in order.products:
+            self.orders[order.client].append(new_product)
+        
+    def set_current_position(self, position):
+        """
+        Define drone's current position as Position. 
 
-        for new_product in new_products:
-            self.current_weight += new_product.weight
-            self.order[client].append(new_product)
+        Args:
+            position (Position): Grid's position.
+
+        """
+
+        # Sanity Check #
+        if (not isinstance(position, Position)):
+            raise TypeError("ERROR in set_current_position in Drone. Your position must be an instance of Position.")
+        
+        self.current_position = position
 
     def get_order(self, client):
         """
@@ -106,7 +115,7 @@ class Drone:
             client (Client): Client to be found
 
         Returns:
-            dict (dict{Client: list[Product]}): If order found, order with Key being Client instance and values, it's products. None, otherwise.
+            dict (dict{Client: list[Product]}): If order found, order with Key being client and values it's products. None, otherwise.
 
         Raises: 
             ValueError: If "client" is None (Invalid Client).
@@ -115,9 +124,9 @@ class Drone:
 
         # Sanity Check. #
         if (client is None):
-            raise ValueError("ERROR in get_order in Drone. Your client must be a real Client.")
+            raise ValueError("ERROR in get_order in Drone. Your Order must have a valid client.")
         if (not isinstance(client, Client)):
-            raise TypeError("ERROR in get_order in Drone. Your client must be an instance of Client.")
+            raise TypeError("ERROR in get_order in Drone. Your Client must be an instance of Client.")
         
         order_dict = None
         if (client in self.order):
@@ -126,8 +135,41 @@ class Drone:
             order_dict[client] = current_order_client_items
     
         return order_dict
-
     
+    def get_orders(self):
+        """
+        Return Drone's orders
+
+        Returns:
+            dict (dict{[Client]: list[Product]}): If drone has any order. None, otherwise.
+        """
+
+        return self.orders
+    
+    def clear_orders(self):
+        """
+        Clear drone's orders.
+        """
+        
+        self.current_weight = 0.0
+        self.orders.clear()
+
+    def update_drone_velocity(self):
+        """
+        Returns drone's current velocity. It is defined by the function v = vmax * (1 - alpha * (weight/total_weight)) * (1 - beta * (height/total_height))
+
+        Returns:
+            velocity (float): Drone's currenty velocity.
+        """
+        alpha = 0.5
+        beta = 0.2
+
+        self.velocity = self.maximum_velocity * (1 - alpha * (self.current_weight / self.maximum_weight)) * (1 - beta * (self.altitude / self.maximum_altitude))
+        return self.velocity
+
+    def update_drone_battery(self, new_value):
+        self.battery = new_value
+
     def get_drone_info(self):
         """
         Gets Drone's attributes.

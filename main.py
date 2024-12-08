@@ -119,7 +119,7 @@ def a_star(start, goal, drone):
                 f_score[neighbor] = g_score[neighbor] + manhattan_distance(neighbor, goal)
                 open_set.put((f_score[neighbor], neighbor.X, neighbor.Y, neighbor))
 
-def battery_consumption(distance, altitude, weight):
+def battery_consumption(distance, altitude, weight, velocity):
     """
     Calculates battery consumption. It is defined by the function b -= distance * (base_consumption + altitude_factor + weight_factor)
     distance = manhattan_distance between initial an final point
@@ -127,53 +127,71 @@ def battery_consumption(distance, altitude, weight):
     altitude_factor = 0.0001 * altitude
     weight_facotr = 0.02 * weight
     """
-    base_consumption = 0.1
+    base_consumption = 10
     altitude_factor = 0.0001 * altitude
-    weight_factor = 0.01 * weight
-    return distance * (base_consumption + altitude_factor + weight_factor)
+    weight_factor = 0.1 * weight
+    return (distance / velocity) * (base_consumption + altitude_factor + weight_factor)
 
-def calculate_battery_for_route(route, weight):
+def calculate_battery_for_route(route, weight, velocity):
     total_battery_consumed = 0
     for i in range(len(route) - 1):
         current = route[i]
         next_node = route[i + 1]
         distance = manhattan_distance(current, next_node)
         altitude = current.Z
-        total_battery_consumed += battery_consumption(distance, altitude, weight)
+        total_battery_consumed += battery_consumption(distance, altitude, weight, velocity)
     return total_battery_consumed
 
-def find_best_route_with_battery_check(start_position, client_position, base_position, drone, order_weight):
+def find_best_route_with_battery_check(start_position, client_position, base_position, drone, order_weight, more_orders):
 
     went_to_recharge = False
 
-    # Find best route to client
-    route_to_client = a_star(start_position, client_position, drone)
-    battery_consumption = calculate_battery_for_route(route_to_client, drone.current_weight)
-    route_to_base = a_star(client_position, base_position, drone)
-    battery_consumption += calculate_battery_for_route(route_to_base, (drone.current_weight - order_weight))
-    final_route = route_to_client
+    # If drone hasn't finished it's orders
+    if not more_orders:
+        # Find best route to client
+        route_to_client = a_star(start_position, client_position, drone)
+        battery_consumption = calculate_battery_for_route(route_to_client, drone.current_weight, drone.velocity)
+        route_to_base = a_star(client_position, base_position, drone)
+        battery_consumption += calculate_battery_for_route(route_to_base, (drone.current_weight - order_weight), drone.velocity)
+        final_route = route_to_client
 
-    visual_string = f"Current total battery: {(drone.battery / drone.maximum_battery ) * 100:.2f}%\nWill consume {(battery_consumption / drone.maximum_battery) * 100:.2f}% to next route\n"
-    # If route taken consumes more battery than drone has or will make it get stuck, we must send drone to base to recharge
-    if ( battery_consumption > drone.battery ):
-        went_to_recharge = True
-        final_route = a_star(drone.current_position, base_position, drone)
-        battery_consumption = calculate_battery_for_route(final_route, drone.current_weight)
+        visual_string = f"Current total battery: {(drone.battery / drone.maximum_battery ) * 100:.2f}%\nWill consume {(battery_consumption / drone.maximum_battery) * 100:.2f}% to next route\n"
+        # If route taken consumes more battery than drone has or will make it get stuck, we must send drone to base to recharge
+        if ( battery_consumption > drone.battery ):
+            went_to_recharge = True
+            final_route = a_star(drone.current_position, base_position, drone)
+            battery_consumption = calculate_battery_for_route(final_route, drone.current_weight, drone.velocity)
 
-    if went_to_recharge: visual_string += "Going back to base to recharge!\n"
-    print(visual_string)
-    for position in final_route:
-        drone.set_current_position(position)
-        position.set_position_classification("drone")
-        print(grid)
-        foo = input("Next step...")
-        clear_terminal()
-        grid.grid_update_position_classification()
+        if went_to_recharge: visual_string += "Going back to base to recharge!\n"
+        print(visual_string)
+        for position in final_route:
+            drone.set_current_position(position)
+            position.set_position_classification("drone")
+            print(grid)
+            foo = input("Next step...")
+            clear_terminal()
+            grid.grid_update_position_classification()
 
-    if (went_to_recharge):
-        drone.update_drone_battery(drone.maximum_battery)
+        if (went_to_recharge):
+            drone.update_drone_battery(drone.maximum_battery)
+        else:
+            drone.update_drone_battery(drone.battery - battery_consumption)
+
+
     else:
-        drone.update_drone_battery(drone.battery - battery_consumption)
+        print("Going back to get more orders.")
+        route_to_base = a_star(start_position, client_position, drone)
+        battery_consumption = calculate_battery_for_route(route_to_base, drone.current_weight, drone.velocity)
+        for position in route_to_base:
+            drone.set_current_position(position)
+            position.set_position_classification("drone")
+            print(grid)
+            foo = input("Next step...")
+            clear_terminal()
+            grid.grid_update_position_classification()
+
+        drone.update_drone_battery(drone.maximum_battery)
+
 
     return went_to_recharge
 
@@ -211,13 +229,15 @@ def main():
 
             order_weight = sum(product.weight for product in products)
 
-            went_to_recharge = find_best_route_with_battery_check(next_drone.current_position, client.position, grid.get_position_in_grid(X_base, Y_base), next_drone, order_weight)
+            went_to_recharge = find_best_route_with_battery_check(next_drone.current_position, client.position, grid.get_position_in_grid(X_base, Y_base), next_drone, order_weight, False)
 
             if not went_to_recharge:
                 del next_drone.get_orders()[client]
 
 
         next_drone.clear_orders()
+        
+        find_best_route_with_battery_check(next_drone.current_position, grid.get_position_in_grid(X_base, Y_base), grid.get_position_in_grid(X_base, Y_base), next_drone, order_weight, True)
 
 
 
